@@ -1,0 +1,96 @@
+<!DOCTYPE html>  
+<html lang="en">  
+  <head>
+  	<link rel="stylesheet" href="/components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/components/flat-ui/dist/css/flat-ui.css">
+
+    <style>
+    	body, html {
+				height: 100%;
+			}
+
+			.container-fluid {
+			    margin: 0 auto;
+			    height: 100%;
+			    padding: 20px;
+
+			    -moz-box-sizing: border-box;
+			    -webkit-box-sizing: border-box;
+			    box-sizing: border-box;
+			}
+
+			.form-control[disabled], .form-control[readonly], fieldset[disabled] .form-control, .select2-search input[type="text"][disabled], .select2-search input[type="text"][readonly], fieldset[disabled] .select2-search input[type="text"] {
+				color: black;
+			}
+    </style>
+
+  	<script src="/socket.io/socket.io.js"></script>
+  	<script>
+		  var socket = io.connect();
+
+			var displayCharacter = function(character) {
+				document.querySelector('#app-char-name').value = character.characterName
+				document.querySelector('#app-char-init').value = character.init
+				document.querySelector('#app-char-effect1').value = character.effects[0].effectName
+				document.querySelector('#app-char-effect2').value = character.effects[1].effectName
+				document.querySelector('#app-char-effect3').value = character.effects[2].effectName
+				document.querySelector('#app-char-effect4').value = character.effects[3].effectName
+			}
+
+			socket.emit('subscribe')
+			socket.on('change', function(data){
+				var selectedCharacter = data.selected
+        var listCharacter = data.list
+
+        for(var i in listCharacter) {
+        	if(listCharacter[i].characterName == selectedCharacter) {
+        		console.log('')
+		        displayCharacter(listCharacter[i])
+        		break;
+        	}
+        }
+			})
+		</script>
+  </head>
+  <body>
+  	<div class="container-fluid">
+  		<div class="container-fluid well">
+	      <div class="row-fluid span12">
+  				<div class="col-md-1">Name: </div>
+	      	<div class="col-md-11">
+	          <input disabled="disabled" class="form-control" type="text" id="app-char-name" value="">
+	        </div>
+	      </div>
+	      <div class="row-fluid span12">
+	      	<div class="col-md-1">Init: </div>
+	      	<div class="col-md-11">
+	          <input disabled="disabled" class="form-control" type="number" id="app-char-init" value="">
+	        </div>
+	      </div>
+	      <div class="row-fluid span12">
+	      	<div class="col-md-12">Effects: </div>
+	      </div>
+	      <div class="row-fluid span12">
+	      	<div class="col-md-12"> 
+	      		<input disabled="disabled" class="form-control" type="text" id="app-char-effect1" value="">
+	      	</div>
+	      </div>
+	      <div class="row-fluid span12">
+	      	<div class="col-md-12"> 
+	      		<input disabled="disabled" class="form-control" type="text" id="app-char-effect2" value="">
+	      	</div>
+	      </div>
+	      <div class="row-fluid span12">
+	      	<div class="col-md-12"> 
+	      		<input disabled="disabled" class="form-control" type="text" id="app-char-effect3" value="">
+	      	</div>
+	      </div>
+	      <div class="row-fluid span12">
+	      	<div class="col-md-12"> 
+	      		<input disabled="disabled" class="form-control" type="text" id="app-char-effect4" value="">
+	      	</div>
+	      </div>
+		  </div>
+	  </div>
+  </body>
+</html>  

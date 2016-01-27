@@ -1,0 +1,292 @@
+<!DOCTYPE html>  
+<html lang="en">  
+  <head>
+    <link rel="stylesheet" href="/components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/components/flat-ui/dist/css/flat-ui.css">
+
+    <style>
+      .app {
+        margin-top:5px;
+      }
+
+      .app-list {
+        margin-top: 2px;
+      }
+
+      .app-frame-character {
+        margin-top: 2px;
+        background: #e5e5e5;
+      }
+
+      .app-selected {
+        background: #EDD5DE;
+      }
+
+      .top-buffer {
+        margin-top:4px;
+      }
+
+      .no-padding {
+        padding:0px;
+      }
+
+      .left-right-buffer[class*=col-] {
+        padding-left: 2px;
+        padding-right: 2px;
+      }
+    </style>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io.connect();
+
+      var listCharacter = []
+      var selectedCharacter = undefined
+
+      var loaded = function(){
+        document.querySelector('#app-input-init').onkeypress = addPressEnter
+        document.querySelector('#app-input-characterName').onkeypress = addPressEnter     
+        
+        document.querySelector('#app-add').onclick = addEntry
+      }
+
+      var renderListCharacter = function() {
+        var list = document.querySelector('#app-list')
+        list.innerHTML = ''
+
+        var html = ''
+        for(var i in listCharacter) {
+          var c = listCharacter[i]
+
+          html += '<div class="app-frame-character well top-buffer'
+
+          if(selectedCharacter == c.characterName) {
+            html += ' app-selected'
+          }
+          html +=   '">' +
+            '<div class="row-fluid span12 top-buffer">' +
+              '<div app-position="' + i + '" class="app-select fui-time col-md-1 "></div>' +
+              '<div app-position="' + i + '" class="app-delete fui-trash col-md-1"></div>' + 
+              '<button class="app-next btn btn-default btn-default col-md-1 col-md-offset-9">Next</button>' +
+            '</div>' +
+            '<div class="clearfix"></div>' +
+            '<div class="row-fluid controls form-inline span12 top-buffer">' +
+              '<div class="input-group col-md-3">' +
+                '<input app-position="' + i + '" app-field="characterName" class="app-editable form-control" type="text" value="' + c.characterName + '">' +
+                '<span class="input-group-addon">Name</span>' +
+              '</div>' +
+              '<div class="input-group col-md-2 col-md-offset-1">' +
+                '<input app-position="' + i + '" app-field="hp" class="app-editable form-control" type="number" value="' + c.hp + '">' +
+                '<span class="input-group-addon">HP</span>' +
+              '</div>' +
+              '<div class="input-group col-md-2 col-md-offset-4">' +
+                '<input app-position="' + i + '" app-field="init" class="app-editable form-control" type="number" value="' + c.init + '">' +
+                '<span class="input-group-addon">Init</span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="row-fluid span12 top-buffer">Effects:</div>' +
+            '<div class="row-fluid form-inline span12 top-buffer">'
+
+            for(var j = 0; j < 4; j++) {
+              html += '<div class="input-group col-md-3 left-right-buffer">' +
+                '<input app-position="' + i + '" app-effect-position="' + j + '" app-field="effectTurn" class="app-editable form-control" type="number" value="' + (c.effects[j].effectTurn) + '">' +
+                '<span class="input-group-addon">Turn</span>' +
+              '</div>'
+            }
+
+            html += '</div>' +
+            '<div class="row-fluid form-inline span12">'
+
+            for(var j = 0; j < 4; j++) {
+              html += '<div class="input-group col-md-3 left-right-buffer">' +
+                '<input app-position="' + i + '" app-effect-position="' + j + '" app-field="effectName" class="app-editable form-control" type="text" value="' + (c.effects[j].effectName) + '">' +
+              '</div>'
+            }
+            
+            html +='</div>' +
+          '</div>'
+        }
+        list.innerHTML = html
+
+        var listEditables = document.querySelectorAll('.app-editable')
+        for(var i in listEditables) {
+          listEditables[i].onchange = function(e){
+            var value = e.target.value
+            var field = e.target.getAttribute('app-field')
+            var position = e.target.getAttribute('app-position')
+            var effectPosition = e.target.getAttribute('app-effect-position')
+            editEntry(position, effectPosition, field, value)
+          }
+        }
+
+        var listSelect = document.querySelectorAll('.app-select')
+        for(var i in listSelect) {
+          listSelect[i].onclick = selectEntry
+        }
+
+        var listDelete = document.querySelectorAll('.app-delete')
+        for(var i in listDelete) {
+          listDelete[i].onclick = deleteEntry
+        }
+
+        var listNext =  document.querySelectorAll('.app-next')
+        for(var i in listNext) {
+          listNext[i].onclick = nextEntry
+        }
+      }
+
+      var addEntry = function() {
+        var init = document.querySelector('#app-input-init')
+        var character  = document.querySelector('#app-input-characterName')
+
+        var initValue = init.value
+        var characterName = character.value
+
+        if(initValue && characterName) {
+          var tuple = {
+            init: initValue,
+            characterName: characterName,
+            effects: [
+              {effectName: "", effectTurn: 0},
+              {effectName: "", effectTurn: 0},
+              {effectName: "", effectTurn: 0},
+              {effectName: "", effectTurn: 0}
+            ],
+            hp: 0
+          }
+
+          listCharacter.push(tuple)
+          if(listCharacter.length == 1) {
+            selectedCharacter = characterName
+          }
+          
+          listCharacter.sort(sortOnInit)
+          init.value = ''
+          character.value = ''
+          changeOnState()
+          renderListCharacter()
+          init.focus()
+          init.parentElement.parentElement.classList.remove('has-error')
+          character.parentElement.parentElement.classList.remove('has-error')
+        } else {
+          if(!initValue) {
+            init.parentElement.parentElement.classList.add('has-error')
+          }
+          if(!characterName) {
+            character.parentElement.parentElement.classList.add('has-error')
+          }
+        }
+      }
+
+      var nextEntry = function() {
+        for(var i in listCharacter) {
+          if(listCharacter[i].characterName == selectedCharacter) {
+            for(var j = 0; j<4; j++) {
+              if(listCharacter[i].effects[j].effectTurn > 0) {
+                listCharacter[i].effects[j].effectTurn--
+
+                if(listCharacter[i].effects[j].effectTurn == 0) {
+                  listCharacter[i].effects[j].effectName = ""
+                }
+              }
+            }
+
+            if(i == listCharacter.length - 1) {
+              selectedCharacter = listCharacter[0].characterName
+            } else {
+              selectedCharacter = listCharacter[parseInt(i)+1].characterName
+            }
+            break;
+          }
+        }
+        changeOnState()
+        renderListCharacter()
+      }
+
+      var selectEntry = function(e) {
+        var position = e.target.getAttribute('app-position')
+        selectedCharacter = listCharacter[position].characterName
+        changeOnState()
+        renderListCharacter()
+      }
+
+      var deleteEntry = function(e) {
+        var position = e.target.getAttribute('app-position')
+        if(selectedCharacter == listCharacter[position].characterName) {
+          if(position == listCharacter.length - 1) {
+            selectedCharacter = listCharacter[0].characterName
+          } else {
+            selectedCharacter = listCharacter[parseInt(position)+1].characterName
+          }
+        }
+        listCharacter.splice(position, 1)
+        changeOnState()
+        renderListCharacter()
+      }
+
+      var addPressEnter = function(e) {
+          if(e.which == 13) {
+              addEntry();
+          }
+      }
+
+      var sortOnInit = function(a, b){
+        return b.init - a.init
+      }
+
+      var editEntry = function(pos, effectPos, prop, newValue) {
+        if(effectPos) {
+          listCharacter[pos]['effects'][effectPos][prop] = newValue
+        } else {
+          if(prop == 'characterName' && selectedCharacter == listCharacter[pos][prop]) {
+            selectedCharacter = newValue
+          }
+
+          listCharacter[pos][prop] = newValue
+        }
+      
+        listCharacter.sort(sortOnInit)
+        changeOnState()
+        renderListCharacter()
+      }
+
+      var changeOnState = function(){
+        socket.emit('change', {
+          selected: selectedCharacter,
+          list: listCharacter
+        })
+      }
+
+      socket.emit('subscribe')
+      socket.on('change', function(data){
+        selectedCharacter = data.selected
+        listCharacter = data.list
+        renderListCharacter()
+      })
+    </script>
+  </head>
+  <body onload="loaded()">
+    <div class="app container-fluid">
+      <div class="container-fluid span12 well">
+        
+        <div class="col-md-2 no-padding">
+          <div class="input-group">
+            <input type="number" placeholder="Init" class="form-control" id="app-input-init">
+            <span class="input-group-addon">Init</span>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="input-group">
+            <input type="text" placeholder="Name" class="form-control" id="app-input-characterName">
+            <span class="input-group-addon">Name</span>
+          </div>
+        </div>
+        
+        <button class="btn btn-default btn-primary col-md-1 col-md-offset-5" id="app-add">Add</button>
+      </div>
+
+      <div class="container-fluid span12 well" id="app-list"></div>
+    </div>
+  </body>
+</html>  

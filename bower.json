@@ -1,0 +1,24 @@
+{
+  "name": "initiative",
+  "description": "",
+  "main": "index.js",
+  "authors": [
+    "Andrea Gallidabino <andrea.gallidabino@usi.ch>"
+  ],
+  "license": "ISC",
+  "moduleType": [],
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "public/components/",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "flat-ui": "^2.2.2",
+    "bootstrap": "^3.3.6"
+  }
+}
