@@ -25,7 +25,7 @@ IMPORTANT: use a different name for every character.
 
 GMs can keep track of Health Points and buffs/malus durations (`effects`), without showing them to the players.
 
-GMs can edit the table on the fly and the table with automatically sort the initiative correctly and synchronzie with all the clients connected.
+GMs can edit the table on the fly and the table will automatically sort the initiative correctly and automatically synchronzie with all the clients connected.
 
 By clicking on the `clock` icon, the GM will select the corrisponding character WITHOUT affecting the duration of ongoing effects (only the `next` button changes ongoing effects dynamically).
 
