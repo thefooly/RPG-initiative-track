@@ -21,6 +21,7 @@ app.get('/', function (req, res) {
 
 var listCharacter = []
 var selectedCharacter = undefined
+
 io.on('connection', function (socket) {
   socket.on('subscribe', function(data){
   	socket.emit('change', {
