@@ -3,8 +3,10 @@ var app = require('express')();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
-server.listen(3000, function () {
-  console.log('Listening on port 3000!');
+var port = process.env.PORT || 8080;
+
+server.listen(port, function () {
+  console.log('Listening on port ' + port);
 });
 
 app.use(express.static('public'));
